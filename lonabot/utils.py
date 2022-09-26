@@ -58,8 +58,7 @@ def parse_when(when, time_delta: TimeDelta, utc_now, later_delta=None):
 
 
 def parse_delay(when, later_delta=None):
-    iso = _parse_delay_iso(when)
-    if iso:
+    if iso := _parse_delay_iso(when):
         return iso
 
     later = when.split(maxsplit=1)
@@ -74,11 +73,7 @@ def parse_delay(when, later_delta=None):
 
         # TODO Find a better way to support 'mo' and 'm'
         unit = (m.group(2) or 'm').lower()
-        if unit.startswith('mo'):
-            unit = unit[:2]
-        else:
-            unit = unit[0]
-
+        unit = unit[:2] if unit.startswith('mo') else unit[0]
         delay += float(m.group(1)) * _UNITS[unit.lower()]
         when = when[m.end():]
 
@@ -90,14 +85,10 @@ def _parse_due_date(part):
     """
     Parse a part of text as a date, in either DD/MM/YYYY or YYYY/MM/DD format.
     """
-    # Strict DMY
-    m = _DUE_DATE_DMY.match(part)
-    if m:
+    if m := _DUE_DATE_DMY.match(part):
         return reversed(m.groups())
 
-    # Partial (Y)MD
-    m = _DUE_DATE_YMD.match(part)
-    if m:
+    if m := _DUE_DATE_YMD.match(part):
         return m.groups()
 
 
@@ -105,8 +96,7 @@ def _parse_due_time(part):
     """
     Parse a part of text as a time, only the hours being mandatory.
     """
-    m = _DUE_TIME.match(part)
-    if m:
+    if m := _DUE_TIME.match(part):
         return m.groups()
 
 
@@ -123,31 +113,23 @@ def _parse_date_parts(due):
     empty = (0, 0, 0)
     parts = due.split(maxsplit=2)
 
-    # Date then time
-    date_part = _parse_due_date(parts[0])
-    if date_part:
+    if date_part := _parse_due_date(parts[0]):
         if len(parts) == 1:
             return date_part, empty, ''
 
-        time_part = _parse_due_time(parts[1])
-        if time_part:
+        if time_part := _parse_due_time(parts[1]):
             return date_part, time_part, parts[2] if len(parts) > 2 else ''
-        else:
-            parts = due.split(maxsplit=1)
-            return date_part, empty, parts[1]
+        parts = due.split(maxsplit=1)
+        return date_part, empty, parts[1]
 
-    # Time then date
-    time_part = _parse_due_time(parts[0])
-    if time_part:
+    if time_part := _parse_due_time(parts[0]):
         if len(parts) == 1:
             return empty, time_part, ''
 
-        date_part = _parse_due_date(parts[1])
-        if date_part:
+        if date_part := _parse_due_date(parts[1]):
             return date_part, time_part, parts[2] if len(parts) > 2 else ''
-        else:
-            parts = due.split(maxsplit=1)
-            return empty, time_part, parts[1]
+        parts = due.split(maxsplit=1)
+        return empty, time_part, parts[1]
 
     return empty, empty, due
 
@@ -213,10 +195,9 @@ def parse_due(due, time_delta, utc_now):
         # If the month is the past (and no year was specified),
         # then the only possible date is next year.
         if day and month and not year:
-            if not year:
-                due += timedelta(days=365)
-                if calendar.isleap(due.year) and due > datetime(now.year + 1, 2, 28, 23, 59, 59, tzinfo=timezone.utc):
-                    due += timedelta(days=1)
+            due += timedelta(days=365)
+            if calendar.isleap(due.year) and due > datetime(now.year + 1, 2, 28, 23, 59, 59, tzinfo=timezone.utc):
+                due += timedelta(days=1)
         elif not any((day, month, year)):
             due += timedelta(days=1)
 
@@ -270,7 +251,7 @@ def spell_number(n, allow_and=True):
     if n or not spelt:
         if add_and:
             spelt += ' and'
-        spelt += ' ' + spell_digit(n)
+        spelt += f' {spell_digit(n)}'
 
     return spelt.lstrip()
 
@@ -291,10 +272,7 @@ def spell_due(due, utc_now, time_delta=None, prefix=True):
 
 
 def _plural(amount, what):
-    if amount == 1:
-        return f' {amount} {what}'
-    else:
-        return f' {amount} {what}s'
+    return f' {amount} {what}' if amount == 1 else f' {amount} {what}s'
 
 
 def spell_delay(remaining, prefix=True):
@@ -365,11 +343,8 @@ def parse_iso_duration(what):
             try:
                 result += float(number) * mapping[c]
                 number = ''
-            except ValueError:
+            except (ValueError, KeyError):
                 return None  # malformed floating point number
-            except KeyError:
-                return None  # unknown unit
-
     return result
 
 
@@ -387,11 +362,9 @@ def split_message(message, known=(
     text = message.text or message.caption or ''
     if message.photo:
         return text, 'photo', message.photo[-1].file_id
-    else:
-        for what in known:
-            attr = getattr(message, what)
-            if attr:
-                return text, what, attr.file_id
+    for what in known:
+        if attr := getattr(message, what):
+            return text, what, attr.file_id
 
     return text, None, None
 

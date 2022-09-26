@@ -358,13 +358,13 @@ Made with love by @Lonami and hosted by Richard ❤️
                 )
             else:
                 msg = f"There's a difference of {current_delta.delta} seconds "\
-                    'between you and I :D '
+                        'between you and I :D '
 
                 if current_delta.time_zone is not None:
                     msg += f'({current_delta.time_zone}) '
 
                 msg += 'You can change this with commands such as '\
-                    '/tz hh:mm or /tz Europe/Andorra'
+                        '/tz hh:mm or /tz Europe/Andorra'
                 await self.sendMessage(
                     chat_id=update.message.chat.id,
                     text=msg
@@ -373,8 +373,7 @@ Made with love by @Lonami and hosted by Richard ❤️
 
         delta = None
         zone = None
-        m = re.match(r'(\d+):(\d+)', tz[1])
-        if m:
+        if m := re.match(r'(\d+):(\d+)', tz[1]):
             hour, mins = map(int, m.groups())
         else:
             try:
@@ -460,7 +459,7 @@ Made with love by @Lonami and hosted by Richard ❤️
 
         time_delta = self.db.get_time_delta(from_id)
 
-        if len(reminders) == 0:
+        if not reminders:
             text = "You don't have any reminder in this chat yet"
         elif len(reminders) == 1:
             reminder = reminders[0]
@@ -473,14 +472,14 @@ Made with love by @Lonami and hosted by Richard ❤️
                 text = f'You have one reminder {due} here'
         else:
             text = f'You have {utils.spell_number(len(reminders))} ' \
-                   f'reminders in this chat:'
+                       f'reminders in this chat:'
 
             for i, reminder in enumerate(reminders, start=1):
                 due = utils.spell_due(reminder.due, utc_now, time_delta)
 
                 add = reminder.text or 'no text'
                 if len(add) > 40:
-                    add = add[:39] + '…'
+                    add = f'{add[:39]}…'
                 text += f'\n({i}) {due}, {add}'
 
         if update.message.chat.type == 'private':
@@ -581,9 +580,7 @@ Made with love by @Lonami and hosted by Richard ❤️
             if which < 0:
                 raise ValueError('Out of bounds')
 
-            reminder = self.db.get_nth_reminder(chat_id, from_id, which)
-
-            if reminder:
+            if reminder := self.db.get_nth_reminder(chat_id, from_id, which):
                 utc_now = datetime.now(timezone.utc)
                 title = f'Reminder {which + 1}'
                 time_delta = self.db.get_time_delta(from_id)
@@ -781,11 +778,11 @@ Made with love by @Lonami and hosted by Richard ❤️
             member = await self.getChatMember(
                 chat_id=reminder.chat_id, user_id=reminder.creator_id)
 
-            text = '<a href="tg://user?id={}">{}</a>'.format(
-                reminder.creator_id, member.user.first_name or '?')
+            text = f"""<a href="tg://user?id={reminder.creator_id}">{member.user.first_name or '?'}</a>"""
+
 
             if reminder.text:
-                text += ': ' + reminder.text
+                text += f': {reminder.text}'
 
         if reminder.file_type:
             method = getattr(self, f'send{reminder.file_type.title()}')
@@ -809,8 +806,7 @@ Made with love by @Lonami and hosted by Richard ❤️
 
                 await asyncio.sleep(delta)
                 self._sched_reminders.pop()
-                reminder = self.db.pop_reminder(upcoming.id)
-                if reminder:
+                if reminder := self.db.pop_reminder(upcoming.id):
                     asyncio.create_task(self._remind(reminder))
 
             await asyncio.sleep(1)
@@ -838,11 +834,7 @@ Made with love by @Lonami and hosted by Richard ❤️
 
     async def _remind_bday(self, bday, today):
         name = html.escape(bday.person_name)
-        if name.lower().endswith('s'):
-            postfix = "'"
-        else:
-            postfix = "'s"
-
+        postfix = "'" if name.lower().endswith('s') else "'s"
         if bday.person_id:
             mention = f'<a href="tg://user?id={bday.person_id}">{name}</a>'
         else:
@@ -852,7 +844,7 @@ Made with love by @Lonami and hosted by Richard ❤️
             text = f"Today it's {mention}{postfix} birthday! 🎉"
         else:
             text = f"Tomorrow it's {mention}{postfix} birthday. "\
-                   f"Did you get them a present yet 🎁?"
+                       f"Did you get them a present yet 🎁?"
 
         await self.sendMessage(
             chat_id=bday.creator_id,

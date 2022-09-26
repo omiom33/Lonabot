@@ -21,9 +21,7 @@ class TimeDelta:
     time_zone: str
 
     def pytz(self):
-        if self.time_zone is None:
-            return None
-        return pytz.timezone(self.time_zone)
+        return None if self.time_zone is None else pytz.timezone(self.time_zone)
 
 class Database:
     def __init__(self, filename):
@@ -96,8 +94,7 @@ class Database:
         self._conns.clear()
 
     def _save(self):
-        conn = self._conns.get(threading.get_ident())
-        if conn:
+        if conn := self._conns.get(threading.get_ident()):
             conn.commit()
 
     def _cursor(self):
@@ -198,10 +195,7 @@ class Database:
             n -= 1
             row = c.fetchone()
 
-        result = None
-        if row:
-            result = Reminder(*row)
-
+        result = Reminder(*row) if row else None
         c.close()
 
         return result
@@ -217,11 +211,8 @@ class Database:
         else:
             c.execute('SELECT * FROM Reminders ORDER BY Due ASC')
 
-        row = c.fetchone()
-        while row:
+        while row := c.fetchone():
             yield Reminder(*row)
-            row = c.fetchone()
-
         c.close()
 
     def set_time_delta(self, user_id, delta, zone=None):
@@ -302,19 +293,12 @@ class Database:
             params.append(day)
 
         params = tuple(params)
-        if where:
-            where = 'WHERE ' + ' AND '.join(where)
-        else:
-            where = ''
-
+        where = 'WHERE ' + ' AND '.join(where) if where else ''
         c.execute(f'SELECT * FROM Birthdays {where} '
                   'ORDER BY Month ASC, Day ASC', params)
 
-        row = c.fetchone()
-        while row:
+        while row := c.fetchone():
             yield Birthday(*row)
-            row = c.fetchone()
-
         c.close()
 
     def set_birthday_stage(self, birthday_id, year, stage):
