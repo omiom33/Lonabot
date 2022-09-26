@@ -121,8 +121,17 @@ def get_all(text):
     yield '👏👏👏', clap(text)
     yield 'Hmuan Mnid Pweor', scramble(text)  # youtu.be/GWedYV-D_tg
     yield '.desreveR', rev(text)
-    for name, result in zip(['Bold', 'Bold Italics', 'Script', 'Gothic',
-                               'Sans Serif', 'Sans Serif Bold',
-                               'Sans Serif Italics', 'Sans Serif Bold Italics',
-                               'Monospace'], enumerate_modify(text)):
-        yield name, result
+    yield from zip(
+        [
+            'Bold',
+            'Bold Italics',
+            'Script',
+            'Gothic',
+            'Sans Serif',
+            'Sans Serif Bold',
+            'Sans Serif Italics',
+            'Sans Serif Bold Italics',
+            'Monospace',
+        ],
+        enumerate_modify(text),
+    )

@@ -16,8 +16,10 @@ def reshape(columns, array):
     Reshape an array into a matrix with `columns` columns.
     """
     it = iter(array)
-    return [[x for x in itertools.islice(it, columns)]
-            for _ in range((len(array) + columns - 1) // columns)]
+    return [
+        list(itertools.islice(it, columns))
+        for _ in range((len(array) + columns - 1) // columns)
+    ]
 
 
 def get_month_button(month, text=None):
